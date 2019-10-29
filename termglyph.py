@@ -2,6 +2,7 @@ import drawille
 import argparse
 from collections import defaultdict
 from PIL import Image
+import sys
 
 
 COLOR_CONVERSION_RATIO = 2**8 // 5
@@ -125,7 +126,7 @@ class ImgCanvas(drawille.Canvas):
 
         return ret
 
-def display(filepath, resize=True, color=True):
+def get_frame(filepath, resize=True, color=True):
     im = Image.open(filepath)
 
     if resize:
@@ -143,14 +144,20 @@ def display(filepath, resize=True, color=True):
                (b != 0 and b != 255):
                 c.set(x, y, (r, g, b))
 
-    print(c.frame())
+    return c.frame()
 
 
-def parse_and_run():
-    pass
+def display(filepath, resize=True, color=True):
+    print(get_frame(filepath, resize, color))
+
 
 
 if __name__ == '__main__':
-#    parse_and_run()
-    display("assets/dab.png")
+    if len(sys.argv) < 2:
+        print('Path required')
+        sys.exit(1)
+
+    path = sys.argv[1]
+
+    display(path)
 

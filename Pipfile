@@ -7,6 +7,9 @@ verify_ssl = true
 
 [packages]
 pillow = "*"
+imageio = "*"
+imageio-ffmpeg = "*"
+pyfiglet = "*"
 
 [requires]
 python_version = "3.7"
