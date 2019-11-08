@@ -18,6 +18,11 @@ def get_color_string(text, color):
 
 
 def get_rgb(pix):
+    if len(pix) == 1:
+        return pix[0], pix[0], pix[0]
+    elif len(pix) == 2:
+        return pix[0], pix[1], 0
+
     return pix[0], pix[1], pix[2]
 
 

@@ -4,7 +4,7 @@ import curses
 
 def render_title(title):
     f = Figlet(font='starwars')
-    a = f.renderText(title)
+    a = f.renderText(title.upper())
     a = a.split('\n')
     
     return a
@@ -36,17 +36,22 @@ def main(stdscr):
     stdscr.clear()
 
     # Title
-    w, h = drawille.getTerminalSize()
+    w, h = drawille.getTerminalSize() 
     rendered = render_title(title)
     x, y = get_cords(rendered, w, h)
 
     add_title(stdscr, rendered, x, y)
 
     stdscr.refresh()
-
     stdscr.getkey()
 
 
+def letterwork(stdscr):
+    pass
+
 
 if __name__ == '__main__':
-    curses.wrapper(main)
+#    curses.wrapper(main)
+    curses.wrapper(letterwork)
+#    stdscr = curses.initscr()
+#    main(12)
