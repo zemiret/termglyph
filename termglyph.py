@@ -132,7 +132,11 @@ class ImgCanvas(drawille.Canvas):
         return ret
 
 def get_frame(filepath, resize=True, color=True):
-    im = Image.open(filepath)
+    # TODO: FIX THIS, make it nicer
+    if isinstance(filepath, str):
+        im = Image.open(filepath)
+    else:
+        im = filepath
 
     if resize:
         im = resize_to_fit(im)    
@@ -154,7 +158,6 @@ def get_frame(filepath, resize=True, color=True):
 
 def display(filepath, resize=True, color=True):
     print(get_frame(filepath, resize, color))
-
 
 
 if __name__ == '__main__':

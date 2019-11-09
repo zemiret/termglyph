@@ -1,6 +1,10 @@
 from pyfiglet import Figlet
+import os
 import drawille
 import curses
+from PIL import Image
+from common import chars
+import termglyph
 
 def render_title(title):
     f = Figlet(font='starwars')
@@ -46,12 +50,37 @@ def main(stdscr):
     stdscr.getkey()
 
 
+def load_letters(dirname):
+    res = {}
+    for c in chars('az', 'AZ'):
+        res[c] = Image.open(os.path.join(dirname, c + '.png'))
+    return res
+
+
 def letterwork(stdscr):
-    pass
+    letter_images = load_letters('out')
+
+    text = 'Long long time ago I started testing this file'
+    text_by_word = text.split()
+    for word in text_by_word:
+        images = [letter_images[letter] for letter in word]
+
+        widths, heights = zip(*(i.size for i in images))
+        total_w = sum(widths)
+        total_h = sum(heights)
+
+        word_image = Image.new('RGB', (total_w, total_h))
+        x_offset = 0
+        for im in images:
+            word_image.paste(im, (x_offset, 0))
+            x_offset += im.size[0]
+
+        termglyph.display(word_image)
 
 
 if __name__ == '__main__':
 #    curses.wrapper(main)
-    curses.wrapper(letterwork)
+#    curses.wrapper(letterwork)
+    letterwork(12)
 #    stdscr = curses.initscr()
 #    main(12)
