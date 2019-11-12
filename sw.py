@@ -7,8 +7,10 @@ from PIL import Image
 from common import chars
 import termglyph
 import locale
+import time
 
 locale.setlocale(locale.LC_ALL, '')    # set your locale
+SWIPE_RATE = 0.01
 
 
 class FrameLine:
@@ -38,7 +40,7 @@ class FrameLine:
         if self.is_out():
             return ''
         elif self.is_partialy_out_up():
-            return '\n'.join(self.frame_lines[abs(y):])
+            return '\n'.join(self.frame_lines[abs(self.y):])
         elif self.is_partialy_out_down():
             return '\n'.join(self.frame_lines[:self.screen_h - self.y])
         else:
@@ -181,11 +183,14 @@ def draw_title(stdscr, title, w, h):
 
 def draw_and_advance_frames(stdscr, frame_window):
     for active_frame in frame_window:
-        stdscr.addstr(
-            active_frame.y,
-            0,
-            active_frame.get_frame().encode('utf-8')
-        )
+        if active_frame.is_partialy_out_up():
+            stdscr.addstr(0, 0, active_frame.get_frame().encode('utf-8'))
+        else:
+            stdscr.addstr(
+                active_frame.y,
+                0,
+                active_frame.get_frame().encode('utf-8')
+            )
 
         active_frame.advance()
 
@@ -193,7 +198,9 @@ def draw_and_advance_frames(stdscr, frame_window):
 def main(stdscr):
     curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
     title = 'welcome-component.js'
-    text = 'abc kanapecki'
+
+    text = 'abc kanapecki what what the heck is this kurdebele lemme go slower'
+#    text = 'abc'
     w, h = drawille.getTerminalSize() 
 
     stdscr.clear()
@@ -201,7 +208,7 @@ def main(stdscr):
     # Title
     draw_title(stdscr, title, w, h)
 
-
+    # Text 
     word_images = convert_text_to_bitmaps(text)
 
     frames = map(lambda im: termglyph.get_frame(im, color=False), word_images)
@@ -212,28 +219,29 @@ def main(stdscr):
 
         framelines.append(FrameLine(frame, y, w, h))
 
-    frame_window = [] 
-    for i, frameline in enumerate(framelines):
-        if len(frame_window) == 0:
-            frame_window.append(frameline)
-    
-        while not frame_window[-1].can_push_next():
-            stdscr.clear()
-            draw_and_advance_frames(stdscr, frame_window)
+    if len(framelines) == 0:
+        return
 
-            stdscr.refresh()
-            stdscr.getkey()
+    frame_window = [framelines[0]] 
+    frame_index = 1
 
-        frame_window.append(frameline)
+    while not len(frame_window) == 0:
+        stdscr.clear()
+        draw_and_advance_frames(stdscr, frame_window)
 
-        if i == len(framelines) - 1:
-            while not frame_window[-1].is_out():
-                stdscr.clear()
-                draw_and_advance_frames(stdscr, frame_window)
+        if frame_window[0].is_out():
+            frame_window.pop(0)
 
-                stdscr.refresh()
-                stdscr.getkey()
-            
+        # TODO: Some error here
+        if frame_window[-1].can_push_next() and frame_index < len(framelines):
+            frame_window.append(framelines[frame_index])
+            frame_index += 1
+
+
+        stdscr.refresh()
+        # stdscr.getkey()
+        time.sleep(SWIPE_RATE)
+           
 
 if __name__ == '__main__':
     curses.wrapper(main)
