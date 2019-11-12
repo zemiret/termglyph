@@ -6,6 +6,10 @@ import curses
 from PIL import Image
 from common import chars
 import termglyph
+import locale
+
+locale.setlocale(locale.LC_ALL, '')    # set your locale
+
 
 def render_title(title):
     f = Figlet(font='starwars')
@@ -34,21 +38,6 @@ def add_title(stdscr, title, x, y):
         stdscr.addstr(y + i, x, line, curses.color_pair(1))
 
 
-def main(stdscr):
-    curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-    title = 'welcome-component.js'
-
-    stdscr.clear()
-
-    # Title
-    w, h = drawille.getTerminalSize() 
-    rendered = render_title(title)
-    x, y = get_cords(rendered, w, h)
-
-    add_title(stdscr, rendered, x, y)
-
-    stdscr.refresh()
-    stdscr.getkey()
 
 
 def find_coeffs(pa, pb):
@@ -76,6 +65,10 @@ def letterwork(text):
 
     text_images = []
     text_by_word = text.split()
+
+    width_lean = 30
+    fixed_height = 50
+
     for word in text_by_word:
         images = [letter_images[letter] for letter in word]
 
@@ -89,13 +82,13 @@ def letterwork(text):
             word_image.paste(im, (x_offset, 0))
             x_offset += im.size[0]
 
-
+        
         coeffs = find_coeffs(
             [
-                (total_w // 4, 0),
-                (3 * total_w // 4, 0),
-                (0, 3 * total_h // 5),
-                (total_w, 3 * total_h // 5)
+                (min (total_w // 2, width_lean), 0),
+                (total_w -  min(width_lean, total_w // 2), 0),
+                (0, fixed_height),
+                (total_w, fixed_height)
             ],
             [(0, 0), (total_w, 0), (0, total_h), (total_w, total_h)]
         )
@@ -108,14 +101,47 @@ def letterwork(text):
 
         text_images.append(word_image)
 
-        print(termglyph.get_frame(word_image))
-
     return text_images
 
 
+def main(stdscr):
+#    curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+#    title = 'welcome-component.js'
+#
+#    stdscr.clear()
+#
+#    # Title
+#    w, h = drawille.getTerminalSize() 
+#    rendered = render_title(title)
+#    x, y = get_cords(rendered, w, h)
+#
+#    add_title(stdscr, rendered, x, y)
+#
+#    stdscr.refresh()
+#    stdscr.getkey()
+
+    text = 'abc kanapecki'
+
+    word_images = letterwork(text)
+
+    for im in word_images:
+        stdscr.clear()
+
+        frame = termglyph.get_frame(im, color=False)
+
+        # TODO! We need to modify termglyph so that it does not add color
+        # string to output when color=False
+        print(frame)
+        stdscr.addstr(0, 0, frame.encode('utf-8'))
+        
+        stdscr.refresh()
+        stdscr.getkey()
+
+
 if __name__ == '__main__':
-#    curses.wrapper(main)
+    curses.wrapper(main)
+#    main(12)
 #    curses.wrapper(letterwork)
-    letterwork('abc kanapeczki')
+#    letterwork('abc kanapeczki')
 #    stdscr = curses.initscr()
 #    main(12)
