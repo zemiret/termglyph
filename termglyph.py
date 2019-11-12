@@ -56,7 +56,7 @@ def resize_to_fit(im):
 
 
 class ImgCanvas(drawille.Canvas):
-    def __init__(self, image, *args, **kwargs):
+    def __init__(self, image, color=True, *args, **kwargs):
         """
         :param image PIL loaded image (png format for now)
         """
@@ -64,6 +64,7 @@ class ImgCanvas(drawille.Canvas):
         super().__init__(*args, **kwargs)
         self.image = image
         self.px = image.load()
+        self.color = color
 
     def clear(self):
         super().clear()
@@ -82,7 +83,9 @@ class ImgCanvas(drawille.Canvas):
             return
 
         self.chars[row][col] |= drawille.pixel_map[y % 4][x % 2]
-        self.colors[row][col] = convert_rgb_to_666(color) 
+
+        if self.color:
+            self.colors[row][col] = convert_rgb_to_666(color) 
 
     def rows(self, min_x=None, min_y=None, max_x=None, max_y=None):
         """Returns a list of the current :class:`Canvas` object lines.
@@ -121,11 +124,14 @@ class ImgCanvas(drawille.Canvas):
                 elif type(char) != int:
                     row.append(char)
                 else:
-                    color_string = get_color_string(
-                        drawille.unichr(drawille.braille_char_offset + char),
-                        color
-                    )
-                    row.append(color_string)
+                    to_append = drawille.unichr(drawille.braille_char_offset + char)
+
+                    if color:
+                        to_append = get_color_string(
+                            to_append,
+                            color
+                        )
+                    row.append(to_append)
                 i += 1
             ret.append(''.join(row))
 
@@ -135,7 +141,7 @@ def get_frame(im, resize=True, color=True):
     if resize:
         im = resize_to_fit(im)    
 
-    c = ImgCanvas(im)
+    c = ImgCanvas(im, color)
     px = c.px 
     
     for x in range(im.size[0]):
