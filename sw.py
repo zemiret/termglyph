@@ -10,7 +10,10 @@ import locale
 import time
 
 locale.setlocale(locale.LC_ALL, '')    # set your locale
-SWIPE_RATE = 0.01
+SWIPE_RATE = 0.1
+WIDTH_MARGIN_PERCENT = 0.1
+WIDTH_LEAN = 30
+FIXED_HEIGHT = 35
 
 
 class FrameLine:
@@ -133,8 +136,8 @@ def convert_text_to_bitmaps(text):
     text_images = []
     text_by_word = text.split()
 
-    width_lean = 30
-    fixed_height = 50
+    width_lean = WIDTH_LEAN
+    fixed_height = FIXED_HEIGHT
 
     for word in text_by_word:
         images = [letter_images[letter] for letter in word]
@@ -152,13 +155,14 @@ def convert_text_to_bitmaps(text):
         
         coeffs = find_coeffs(
             [
-                (min (total_w // 2, width_lean), 0),
-                (total_w -  min(width_lean, total_w // 2), 0),
+                (min (2 * total_w // 5, width_lean), 0),
+                (total_w -  min(width_lean, 2 * total_w // 5), 0),
                 (0, fixed_height),
                 (total_w, fixed_height)
             ],
             [(0, 0), (total_w, 0), (0, total_h), (total_w, total_h)]
         )
+
 
         word_image = word_image.transform(
             (total_w, total_h),
@@ -169,6 +173,49 @@ def convert_text_to_bitmaps(text):
         text_images.append(word_image)
 
     return text_images
+
+
+def combine_bitmaps(bitmaps, w):
+    to_merge = []
+    merge_window = None
+    max_width = int(w * (1 - 2*WIDTH_MARGIN_PERCENT))
+
+    for b in bitmaps:
+        width, height = b.size
+        if merge_window == None:
+            merge_window = {
+                'total_w': width,
+                'total_h': height,
+                'bitmaps': [b],
+            }
+        else:
+            if merge_window['total_w'] + width > max_width:
+                to_merge.append(merge_window)
+
+                merge_window = {
+                    'total_w': width,
+                    'total_h': height,
+                    'bitmaps': [b]
+                }
+            else:
+                merge_window['bitmaps'].append(b)
+                merge_window['total_w'] += width
+                merge_window['total_w'] = max(merge_window['total_w'], height) 
+
+    if merge_window is not None:
+        to_merge.append(merge_window)
+
+    bitmaps = []
+    for m in to_merge:
+        line_image = Image.new('RGB', (m['total_w'], m['total_h']))
+        x_offset = 0
+        for im in m['bitmaps']:
+            line_image.paste(im, (x_offset, 0))
+            x_offset += im.size[0]
+
+        bitmaps.append(line_image)
+
+    return bitmaps
 
 
 def draw_title(stdscr, title, w, h):
@@ -200,7 +247,6 @@ def main(stdscr):
     title = 'welcome-component.js'
 
     text = 'abc kanapecki what what the heck is this kurdebele lemme go slower'
-#    text = 'abc'
     w, h = drawille.getTerminalSize() 
 
     stdscr.clear()
@@ -210,6 +256,8 @@ def main(stdscr):
 
     # Text 
     word_images = convert_text_to_bitmaps(text)
+    # TODO: This... does not throw an error but does not really work
+    word_images = combine_bitmaps(word_images, w)
 
     frames = map(lambda im: termglyph.get_frame(im, color=False), word_images)
     framelines = []
@@ -232,8 +280,9 @@ def main(stdscr):
         if frame_window[0].is_out():
             frame_window.pop(0)
 
-        # TODO: Some error here
-        if frame_window[-1].can_push_next() and frame_index < len(framelines):
+        if len(frame_window) > 0 and\
+           frame_window[-1].can_push_next() and frame_index < len(framelines):
+
             frame_window.append(framelines[frame_index])
             frame_index += 1
 
